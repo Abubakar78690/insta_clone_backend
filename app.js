@@ -33,69 +33,33 @@ export const io = new Server(server, {
 });
 
 
-const connectToMongoCluster = async () => {
-try{
-    await mongoose.connect(process.env.MONGO_CONNECTION_URL)
-    console.log('Successfully connected to MongoDB cluster')
-} catch (error) {
-    throw error
-}
+// Function to connect to MongoDB and start the server
+const startServer = async () => {
+    try {
+        // 1. Connect to MongoDB
+        await mongoose.connect(process.env.MONGO_CONNECTION_URL);
+        console.log('Successfully connected to MongoDB cluster');
+
+        // 2. Define the port using the environment variable, or default to 8080
+        const port = process.env.PORT || 8080;
+        
+        // 3. Start the server ONLY AFTER successful DB connection
+        server.listen(port, () => {
+            // This is the CRITICAL log line Azure needs to see.
+            console.log(`Server is Successfully Running on port ${port}`);
+        });
+
+    } catch (error) {
+        console.error("Failed to connect to MongoDB or start server:", error);
+        // Exit the process so Azure knows the app failed and can try restarting
+        process.exit(1); 
+    }
 }
 
-mongoose.connection.on('Disconnected', () => {
+// Ensure database connection handling is outside the server.listen callback
+mongoose.connection.on('disconnected', () => {
     console.log('Disconnected from MongoDB cluster')
 })
 
-// Socket IO Stuff
-
-io.on('connection', (socket) => {
-console.log(`User with ID: ${socket.id} connected`)
-
-socket.on("join_room", (data) => {
-    if(!socket.rooms.hasOwnProperty(data)){
-        socket.join(data)
-        console.log(`User with ID: ${socket.id} joined room: ${data}`)
-    } else {
-        console.log(`User with ID: ${socket.id} is already in room: ${data}`)
-    }
-    
-})
-
-socket.on("leave_room", (data) => {
-socket.leave(data)
-console.log(`User with ID: ${socket.id} left room ${data}`)
-})
-
-
-socket.once('send_message', (data) => {
-   socket.to(data.room).emit("receive_message", data)
-})
-
-socket.on('disconnect', () => {
-    console.log(`User with ID: ${socket.id} disconnected`)
-})
-
-
-})
-
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-  })
-
-// Backend API routes
-app.use('/api/posts', postRoutes)
-app.use('/api/user', userRoutes)
-app.use('/api/profile', profileRoutes)
-app.use('/api/comments', commentRoutes)
-app.use('/api/conversations', conversationRoutes)
-app.use('/api/messages', messageRoutes)
-
-// If whole server breaks change this from server.listen back to app.listen
-  server.listen(process.env.PORT, (error) =>{
-    if(!error){
-        connectToMongoCluster()
-        console.log(`Server is Successfully Running on ${process.env.PORT}`)}
-    else
-        console.log("Error occurred, server can't start", error);
-    }
-);
+// *** New Startup Logic: Call the single function to start the entire process ***
+startServer();
