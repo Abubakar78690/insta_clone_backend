@@ -37,8 +37,8 @@ export const io = new Server(server, {
 const startServer = async () => {
     try {
         // 1. Connect to MongoDB
-        await mongoose.connect(process.env.MONGO_CONNECTION_URL);
-        console.log('Successfully connected to MongoDB cluster');
+       // await mongoose.connect(process.env.MONGO_CONNECTION_URL);
+        //console.log('Successfully connected to MongoDB cluster');
 
         // 2. Define the port using the environment variable, or default to 8080
         const port = process.env.PORT || 8080;
