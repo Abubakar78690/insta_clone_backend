@@ -13,10 +13,10 @@ import { cloudinaryConfig } from './utils/cloudinary.js'
 import { Server } from 'socket.io'
 import http from 'http'
 
-
+dotenv.config()
 const FRONTEND_URL = process.env.FRONTEND_URL;
 const app = express()
-dotenv.config()
+
 app.use(cors({
     origin: FRONTEND_URL, // <-- Use the variable here
     credentials: true
